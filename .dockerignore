@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+.env
+.env*.local
+dev.db
+*.db
+*.db-journal
+.agents
+.claude
+.windsurf
+skills-lock.json
+README.md

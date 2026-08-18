@@ -1,0 +1,111 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Agendamento {
+  id                  String   @id @default(cuid())
+  protocolo           String   @unique
+  perfilContratante   String   // EMPRESAS, SERVIDOR, KIT_PROPRIO
+  unidadeId           String
+  unidadeNome         String
+  unidadeEndereco     String?
+  dataAgendada        String   // YYYY-MM-DD
+  horaAgendada        String   // HH:mm
+  responsavelNome     String
+  responsavelEmail    String
+  responsavelTelefone String   // WhatsApp
+  
+  empresaDoc          String   // CNPJ ou CPF do empregador
+  empresaRazaoSocial  String
+  empresaEmailAso     String
+  empresaEndereco     String?
+
+  trabalhadorCpf      String
+  trabalhadorNome     String
+  trabalhadorFuncao   String
+  trabalhadorNasc     String   // DD/MM/AAAA ou YYYY-MM-DD
+  tipoExame           String   // ADMISSIONAL, DEMISSIONAL, PERIODICO, MUDANCA_FUNCAO, RETORNO_TRABALHO, RETORNO_15_DIAS
+  
+  examesComplementares String  @default("[]") // JSON string com lista de exames e instruções
+  
+  formaPagamento      String   // PIX_DESCONTO, PADRAO, FATURADO
+  valorBase           Float    @default(90.0)
+  valorAdicionais     Float    @default(0.0)
+  valorDesconto       Float    @default(7.0)
+  valorTotal          Float    @default(83.0)
+  
+  statusPagamento     String   @default("PENDENTE") // PENDENTE, PAGO, FATURADO, ISENTO
+  statusAgendamento   String   @default("AGENDADO") // AGENDADO, CONFIRMADO, CONCLUIDO, CANCELADO, NO_SHOW
+  observacoes         String?
+  lgpdAceite          Boolean  @default(true)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Empresa {
+  id                String   @id @default(cuid())
+  cnpj              String   @unique
+  razaoSocial       String
+  nomeFantasia      String?
+  emailAso          String?
+  telefone          String?
+  logradouro        String?
+  numero            String?
+  bairro            String?
+  municipio         String?
+  uf                String?
+  cep               String?
+  situacaoCadastral String?  @default("ATIVA")
+  tipoConvenio      String   @default("AVULSO") // AVULSO, CONTRATO, KIT_PROPRIO
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Trabalhador {
+  id              String   @id @default(cuid())
+  cpf             String   @unique
+  nome            String
+  dataNascimento  String?
+  funcao          String?
+  empresaCnpj     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Exame {
+  id                String   @id @default(cuid())
+  codigo            String   @unique
+  nome              String
+  preco             Float    @default(0.0)
+  categoria         String   @default("COMPLEMENTAR") // CLINICO, COMPLEMENTAR, LABORATORIAL, GRAFICO
+  instrucaoPreparo  String?
+  ativo             Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Unidade {
+  id                  String   @id @default(cuid())
+  nome                String
+  endereco            String
+  cidade              String   @default("Campo Grande")
+  uf                  String   @default("MS")
+  telefone            String?
+  horariosDisponiveis String   @default("[\"07:30\",\"08:00\",\"08:30\",\"09:00\",\"09:30\",\"10:00\",\"10:30\",\"13:30\",\"14:00\",\"14:30\",\"15:00\",\"15:30\",\"16:00\"]")
+  ativo               Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Configuracao {
+  id        String   @id @default(cuid())
+  chave     String   @unique
+  valor     String
+  descricao String?
+  updatedAt DateTime @updatedAt
+}

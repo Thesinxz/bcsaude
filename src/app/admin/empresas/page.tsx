@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Building2, Search, Plus, Loader2, MapPin, Mail, Phone, CheckCircle2 } from "lucide-react";
 import { formatCpfCnpj, formatPhone } from "@/lib/formatters";
+import ToastContainer from "@/components/ui/Toast";
 
 interface EmpresaItem {
   id: string;
@@ -51,10 +52,18 @@ export default function AdminEmpresasPage() {
     loadEmpresas();
   }, []);
 
+  const [toasts, setToasts] = useState<{ id: string; type: "success" | "error" | "warning" | "info"; message: string }[]>([]);
+  const addToast = (type: "success" | "error" | "warning" | "info", message: string) => {
+    setToasts((prev) => [...prev, { id: `${Date.now()}`, type, message }]);
+  };
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   const handleBuscarCnpj = async () => {
     const raw = novoCnpj.replace(/\D/g, "");
     if (raw.length !== 14) {
-      alert("Informe um CNPJ de 14 dígitos.");
+      addToast("warning", "Informe um CNPJ com 14 dígitos.");
       return;
     }
 
@@ -66,11 +75,12 @@ export default function AdminEmpresasPage() {
         setNovoRazao(data.razao_social || "");
         if (data.email) setNovoEmail(data.email);
         if (data.telefone) setNovoTelefone(data.telefone);
+        addToast("success", `Empresa localizada: ${data.razao_social}`);
       } else {
-        alert("CNPJ não encontrado na Receita Federal.");
+        addToast("error", "CNPJ não encontrado na Receita Federal.");
       }
     } catch {
-      alert("Erro na consulta.");
+      addToast("error", "Erro ao consultar CNPJ na Receita Federal.");
     } finally {
       setConsultandoCnpj(false);
     }
@@ -79,7 +89,7 @@ export default function AdminEmpresasPage() {
   const handleSalvarEmpresa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoCnpj.trim() || !novoRazao.trim()) {
-      alert("Preencha CNPJ e Razão Social.");
+      addToast("warning", "Preencha o CNPJ e a Razão Social da empresa.");
       return;
     }
 
@@ -103,12 +113,13 @@ export default function AdminEmpresasPage() {
         setNovoRazao("");
         setNovoEmail("");
         setNovoTelefone("");
+        addToast("success", "Empresa cadastrada com sucesso!");
         loadEmpresas();
       } else {
-        alert("Erro ao cadastrar empresa.");
+        addToast("error", "Erro ao cadastrar empresa.");
       }
     } catch {
-      alert("Falha na conexão.");
+      addToast("error", "Falha na conexão com o servidor.");
     } finally {
       setSaving(false);
     }
@@ -122,6 +133,7 @@ export default function AdminEmpresasPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

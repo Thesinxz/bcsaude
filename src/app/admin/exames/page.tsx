@@ -15,12 +15,20 @@ import {
 } from "lucide-react";
 import { ExameItem } from "@/types";
 import { formatCurrencyBRL } from "@/lib/formatters";
+import ToastContainer from "@/components/ui/Toast";
 
 export default function AdminExamesPage() {
   const [loading, setLoading] = useState(true);
   const [savingBase, setSavingBase] = useState(false);
   const [savingExame, setSavingExame] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [toasts, setToasts] = useState<{ id: string; type: "success" | "error" | "warning" | "info"; message: string }[]>([]);
+
+  const addToast = (type: "success" | "error" | "warning" | "info", message: string) => {
+    setToasts((prev) => [...prev, { id: `${Date.now()}`, type, message }]);
+  };
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   const [valorBasePadrao, setValorBasePadrao] = useState(90.0);
   const [descontoPixReais, setDescontoPixReais] = useState(7.0);
@@ -47,8 +55,8 @@ export default function AdminExamesPage() {
           setHorasLimitePix(data.config.horasLimitePix || 2);
         }
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      console.error("Erro ao carregar exames");
     } finally {
       setLoading(false);
     }
@@ -58,29 +66,27 @@ export default function AdminExamesPage() {
     loadData();
   }, []);
 
-  const handleSaveConfigBase = async (e: React.FormEvent) => {
+  const handleSalvarConfigBase = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingBase(true);
-    setFeedback("");
     try {
       const res = await fetch("/api/admin/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          valorBasePadrao: Number(valorBasePadrao),
-          descontoPixReais: Number(descontoPixReais),
-          horasLimitePix: Number(horasLimitePix),
+          VALOR_BASE_PADRAO: valorBasePadrao.toString(),
+          DESCONTO_PIX_REAIS: descontoPixReais.toString(),
+          HORAS_LIMITE_PIX: horasLimitePix.toString(),
         }),
       });
 
       if (res.ok) {
-        setFeedback("Valores base e desconto PIX atualizados com sucesso!");
-        setTimeout(() => setFeedback(""), 4000);
+        addToast("success", "Valores base e desconto PIX atualizados com sucesso!");
       } else {
-        alert("Erro ao salvar valores.");
+        addToast("error", "Erro ao salvar valores.");
       }
     } catch {
-      alert("Falha na conexão.");
+      addToast("error", "Falha na conexão com o servidor.");
     } finally {
       setSavingBase(false);
     }
@@ -89,7 +95,7 @@ export default function AdminExamesPage() {
   const handleCriarExame = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoExameNome.trim() || !novoExamePreco) {
-      alert("Informe o nome e o preço do exame.");
+      addToast("warning", "Informe o nome e o preço do exame.");
       return;
     }
 
@@ -110,12 +116,13 @@ export default function AdminExamesPage() {
         setNovoExamePreco("");
         setNovoExameInstrucao("");
         setShowNovoForm(false);
+        addToast("success", "Exame cadastrado com sucesso!");
         loadData();
       } else {
-        alert("Erro ao cadastrar novo exame.");
+        addToast("error", "Erro ao cadastrar novo exame.");
       }
     } catch {
-      alert("Falha na conexão.");
+      addToast("error", "Falha na conexão com o servidor.");
     } finally {
       setSavingExame(false);
     }
@@ -128,9 +135,10 @@ export default function AdminExamesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, preco }),
       });
+      addToast("success", "Preço atualizado com sucesso!");
       loadData();
     } catch {
-      alert("Erro ao atualizar exame.");
+      addToast("error", "Erro ao atualizar preço do exame.");
     }
   };
 
@@ -140,6 +148,7 @@ export default function AdminExamesPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
@@ -150,13 +159,6 @@ export default function AdminExamesPage() {
         </p>
       </div>
 
-      {feedback && (
-        <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs font-semibold text-emerald-900">
-          <CheckCircle className="h-4 w-4 text-emerald-700" />
-          <span>{feedback}</span>
-        </div>
-      )}
-
       {/* Editor de Preço Base ASO */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
@@ -166,7 +168,7 @@ export default function AdminExamesPage() {
           </h2>
         </div>
 
-        <form onSubmit={handleSaveConfigBase} className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+        <form onSubmit={handleSalvarConfigBase} className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div>
             <label className="block text-slate-700 font-semibold mb-1">
               Valor Base Padrão (Sem Desconto) *

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import StepIndicator from "@/components/wizard/StepIndicator";
@@ -10,9 +10,11 @@ import Step3Empresa from "@/components/wizard/Step3Empresa";
 import Step4Trabalhador from "@/components/wizard/Step4Trabalhador";
 import Step5Pagamento from "@/components/wizard/Step5Pagamento";
 import ResumoCard from "@/components/wizard/ResumoCard";
+import ToastContainer, { ToastMessage, ToastType } from "@/components/ui/Toast";
 import { AgendamentoData, ExameItem, FormaPagamento, PerfilContratante, UnidadeItem } from "@/types";
 import { INITIAL_UNIDADES, INITIAL_EXAMES } from "@/lib/initialData";
 import { Calendar } from "lucide-react";
+import { isValidCPF, isValidDocEmpresa, isValidEmail } from "@/lib/validators";
 
 export default function AgendamentoPage() {
   const router = useRouter();
@@ -25,6 +27,16 @@ export default function AgendamentoPage() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const addToast = useCallback((type: ToastType, title: string, message: string) => {
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setToasts((prev) => [...prev, { id, type, title, message }]);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const [formData, setFormData] = useState<Partial<AgendamentoData>>({
     perfilContratante: "EMPRESAS (COM CNPJ) / OU EMPREGADORES (CPF/CAEPF / CEI)",
@@ -79,7 +91,94 @@ export default function AgendamentoPage() {
     setFormData((prev) => ({ ...prev, ...fields }));
   };
 
+  const validateAllFieldsAndGoToError = (): boolean => {
+    const isServidor = formData.perfilContratante?.includes("SERVIDOR") || formData.perfilContratante?.includes("CONCURSO");
+
+    // 1. Validação da Etapa 2 (Atendimento & Responsável)
+    if (!formData.dataAgendada || !formData.horaAgendada) {
+      setCurrentStep(2);
+      addToast("warning", "Etapa 2: Data & Horário", "Selecione o dia e o horário de atendimento desejados.");
+      return false;
+    }
+    if (!formData.responsavelNome?.trim()) {
+      setCurrentStep(2);
+      addToast("warning", "Etapa 2: Responsável", "Informe o nome do responsável pelo agendamento.");
+      return false;
+    }
+    if (!formData.responsavelEmail?.trim() || !isValidEmail(formData.responsavelEmail)) {
+      setCurrentStep(2);
+      addToast("warning", "Etapa 2: E-mail", "Informe um e-mail de contato válido.");
+      return false;
+    }
+    if (!formData.responsavelTelefone?.trim() || formData.responsavelTelefone.length < 10) {
+      setCurrentStep(2);
+      addToast("warning", "Etapa 2: WhatsApp", "Informe o telefone/WhatsApp para envio do comprovante.");
+      return false;
+    }
+
+    // 2. Validação da Etapa 3 (Empresa)
+    if (!isServidor && (!formData.empresaDoc?.trim() || !isValidDocEmpresa(formData.empresaDoc))) {
+      setCurrentStep(3);
+      addToast("warning", "Etapa 3: Empresa", "Informe um CNPJ ou CPF do empregador válido.");
+      return false;
+    }
+    if (!formData.empresaRazaoSocial?.trim()) {
+      setCurrentStep(3);
+      addToast(
+        "warning",
+        "Etapa 3: Identificação",
+        isServidor ? "Informe o Órgão Convocador / Edital do Concurso." : "Informe a Razão Social da empresa."
+      );
+      return false;
+    }
+    if (!formData.empresaEmailAso?.trim() || !isValidEmail(formData.empresaEmailAso)) {
+      setCurrentStep(3);
+      addToast("warning", "Etapa 3: E-mail do ASO", "Informe um e-mail válido para envio do ASO assinado.");
+      return false;
+    }
+
+    // 3. Validação da Etapa 4 (Trabalhador & Tipo de Exame)
+    if (!formData.tipoExame) {
+      setCurrentStep(4);
+      addToast("warning", "Etapa 4: Tipo de Exame", "Selecione o tipo de exame clínico (Admissional, Demissional, Periódico, etc.).");
+      return false;
+    }
+    if (!formData.trabalhadorCpf?.trim() || !isValidCPF(formData.trabalhadorCpf)) {
+      setCurrentStep(4);
+      addToast("warning", "Etapa 4: CPF do Trabalhador", "Informe um CPF válido para o colaborador.");
+      return false;
+    }
+    if (!formData.trabalhadorNome?.trim()) {
+      setCurrentStep(4);
+      addToast("warning", "Etapa 4: Nome do Trabalhador", "Informe o nome completo do colaborador.");
+      return false;
+    }
+    if (!formData.trabalhadorFuncao?.trim()) {
+      setCurrentStep(4);
+      addToast("warning", "Etapa 4: Cargo/Função", "Informe a função que o colaborador exerce ou exercerá.");
+      return false;
+    }
+    if (!formData.trabalhadorNasc?.trim() || formData.trabalhadorNasc.length < 8) {
+      setCurrentStep(4);
+      addToast("warning", "Etapa 4: Nascimento", "Informe a data de nascimento do trabalhador (DD/MM/AAAA).");
+      return false;
+    }
+
+    // 4. Validação da Etapa 5 (LGPD)
+    if (!formData.lgpdAceite) {
+      setCurrentStep(5);
+      addToast("warning", "Etapa 5: Termos & LGPD", "Você precisa declarar ciência dos termos da LGPD e políticas para finalizar.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleFinalSubmit = async () => {
+    if (!validateAllFieldsAndGoToError()) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/agendamentos", {
@@ -97,13 +196,16 @@ export default function AgendamentoPage() {
           origin: { y: 0.6 },
         });
 
-        router.push(`/comprovante/${data.protocolo}`);
+        addToast("success", "Agendamento Criado!", `Protocolo ${data.protocolo} gerado com sucesso.`);
+        setTimeout(() => {
+          router.push(`/comprovante/${data.protocolo}`);
+        }, 300);
       } else {
-        alert(data.error || "Erro ao salvar agendamento. Verifique os dados.");
+        addToast("error", "Não foi possível finalizar", data.error || "Verifique os dados informados e tente novamente.");
       }
     } catch (e) {
       console.error(e);
-      alert("Erro ao conectar com o servidor.");
+      addToast("error", "Falha de Conexão", "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -111,6 +213,9 @@ export default function AgendamentoPage() {
 
   return (
     <div className="flex-1 py-6 sm:py-10 px-3.5 sm:px-6 lg:px-8 pb-36 lg:pb-12 bg-slate-50 w-full max-w-full overflow-x-hidden">
+      {/* Toast Notifications Container */}
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
+
       <div className="mx-auto max-w-6xl w-full">
         {/* Main Banner */}
         <div className="text-center mb-6 sm:mb-8">

@@ -4,11 +4,20 @@ import { useEffect, useState } from "react";
 import { MapPin, Phone, Clock, Plus, Loader2 } from "lucide-react";
 import { UnidadeItem } from "@/types";
 import { formatPhone } from "@/lib/formatters";
+import ToastContainer from "@/components/ui/Toast";
 
 export default function AdminUnidadesPage() {
   const [unidades, setUnidades] = useState<UnidadeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalNovo, setModalNovo] = useState(false);
+
+  const [toasts, setToasts] = useState<{ id: string; type: "success" | "error" | "warning" | "info"; message: string }[]>([]);
+  const addToast = (type: "success" | "error" | "warning" | "info", message: string) => {
+    setToasts((prev) => [...prev, { id: `${Date.now()}`, type, message }]);
+  };
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   const [novoNome, setNovoNome] = useState("");
   const [novoEndereco, setNovoEndereco] = useState("");
@@ -23,10 +32,10 @@ export default function AdminUnidadesPage() {
       const res = await fetch("/api/admin/unidades");
       if (res.ok) {
         const data = await res.json();
-        setUnidades(data.unidades || []);
+        setUnidades(data || []);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      console.error("Erro ao carregar unidades");
     } finally {
       setLoading(false);
     }
@@ -39,7 +48,7 @@ export default function AdminUnidadesPage() {
   const handleSalvarUnidade = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoNome.trim() || !novoEndereco.trim()) {
-      alert("Preencha nome e endereço.");
+      addToast("warning", "Preencha o nome e o endereço da unidade.");
       return;
     }
 
@@ -66,12 +75,13 @@ export default function AdminUnidadesPage() {
         setNovoNome("");
         setNovoEndereco("");
         setNovoCidade("");
+        addToast("success", "Unidade cadastrada com sucesso!");
         loadUnidades();
       } else {
-        alert("Erro ao cadastrar unidade.");
+        addToast("error", "Erro ao cadastrar unidade.");
       }
     } catch {
-      alert("Falha na conexão.");
+      addToast("error", "Falha na conexão com o servidor.");
     } finally {
       setSaving(false);
     }
@@ -79,6 +89,7 @@ export default function AdminUnidadesPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

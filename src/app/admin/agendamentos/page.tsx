@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { AgendamentoData, StatusAgendamento, StatusPagamento } from "@/types";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/formatters";
+import ToastContainer from "@/components/ui/Toast";
 
 export default function AdminAgendamentosPage() {
   const [agendamentos, setAgendamentos] = useState<AgendamentoData[]>([]);
@@ -56,6 +57,14 @@ export default function AdminAgendamentosPage() {
     loadAgendamentos();
   };
 
+  const [toasts, setToasts] = useState<{ id: string; type: "success" | "error" | "warning" | "info"; message: string }[]>([]);
+  const addToast = (type: "success" | "error" | "warning" | "info", message: string) => {
+    setToasts((prev) => [...prev, { id: `${Date.now()}`, type, message }]);
+  };
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   const handleUpdateStatus = async (
     statusAgendamento: StatusAgendamento,
     statusPagamento: StatusPagamento
@@ -71,12 +80,13 @@ export default function AdminAgendamentosPage() {
 
       if (res.ok) {
         setModalOpen(false);
+        addToast("success", "Status atualizado com sucesso!");
         loadAgendamentos();
       } else {
-        alert("Erro ao atualizar status.");
+        addToast("error", "Erro ao atualizar status.");
       }
     } catch {
-      alert("Falha na conexão.");
+      addToast("error", "Falha na conexão com o servidor.");
     } finally {
       setUpdating(false);
     }
@@ -131,6 +141,7 @@ export default function AdminAgendamentosPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

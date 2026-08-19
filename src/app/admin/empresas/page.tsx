@@ -189,7 +189,7 @@ export default function AdminEmpresasPage() {
               <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm">{emp.razaoSocial}</h3>
-                  <span className="font-mono text-xs text-slate-500">{emp.cnpj}</span>
+                  <span className="font-mono text-xs text-slate-500 font-medium">{formatCpfCnpj(emp.cnpj)}</span>
                 </div>
                 <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 text-[10px] font-bold text-sky-900">
                   {emp.tipoConvenio}
@@ -204,7 +204,7 @@ export default function AdminEmpresasPage() {
                 {emp.telefone && (
                   <p className="flex items-center gap-1.5">
                     <Phone className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{emp.telefone}</span>
+                    <span>{formatPhone(emp.telefone)}</span>
                   </p>
                 )}
                 {emp.endereco && (

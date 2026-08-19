@@ -14,7 +14,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { AgendamentoData } from "@/types";
-import { formatCurrencyBRL, formatDateBR } from "@/lib/formatters";
+import { formatCurrencyBRL, formatDateBR, formatCpfCnpj } from "@/lib/formatters";
 
 interface StatsData {
   totalAgendamentos: number;
@@ -269,11 +269,11 @@ export default function AdminDashboardPage() {
                   </td>
                   <td className="py-3 px-3">
                     <span className="font-semibold text-slate-900 block">{ag.trabalhadorNome}</span>
-                    <span className="text-[10px] text-slate-500">{ag.trabalhadorCpf}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{formatCpfCnpj(ag.trabalhadorCpf)}</span>
                   </td>
                   <td className="py-3 px-3">
                     <span className="truncate block max-w-xs">{ag.empresaRazaoSocial}</span>
-                    <span className="text-[10px] text-slate-500">{ag.empresaDoc}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{formatCpfCnpj(ag.empresaDoc)}</span>
                   </td>
                   <td className="py-3 px-3 whitespace-nowrap">
                     {formatDateBR(ag.dataAgendada)} às {ag.horaAgendada}

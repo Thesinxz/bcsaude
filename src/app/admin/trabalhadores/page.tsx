@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Users, Search, Loader2, Calendar, FileText, User } from "lucide-react";
-import { formatDateBR } from "@/lib/formatters";
+import { formatDateBR, formatCpfCnpj } from "@/lib/formatters";
 
 interface TrabalhadorItem {
   id: string;
@@ -100,7 +100,7 @@ export default function AdminTrabalhadoresPage() {
                     <User className="h-4 w-4 text-[#0F2C59]" />
                     {trab.nome}
                   </h3>
-                  <span className="font-mono text-xs text-slate-500">{trab.cpf}</span>
+                  <span className="font-mono text-xs text-slate-500 font-medium">{formatCpfCnpj(trab.cpf)}</span>
                 </div>
                 {trab.funcao && (
                   <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">

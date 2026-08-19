@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Search, Loader2, Calendar, Clock, MapPin, User, Building2, AlertCircle, Eye, ArrowRight } from "lucide-react";
 import { AgendamentoData } from "@/types";
-import { formatCurrencyBRL, formatDateBR } from "@/lib/formatters";
+import { formatCurrencyBRL, formatDateBR, formatCpfCnpj } from "@/lib/formatters";
 
 export default function ConsultarPage() {
   const [query, setQuery] = useState("");
@@ -163,7 +163,7 @@ export default function ConsultarPage() {
                           <User className="h-3.5 w-3.5 text-[#0F2C59]" /> Trabalhador
                         </span>
                         <strong className="text-slate-900 block truncate">{item.trabalhadorNome}</strong>
-                        <span className="text-slate-600">{item.trabalhadorCpf} · {item.trabalhadorFuncao}</span>
+                        <span className="text-slate-600 font-mono">{formatCpfCnpj(item.trabalhadorCpf)} · {item.trabalhadorFuncao}</span>
                       </div>
 
                       <div>
@@ -171,7 +171,7 @@ export default function ConsultarPage() {
                           <Building2 className="h-3.5 w-3.5 text-sky-800" /> Empresa Contratante
                         </span>
                         <strong className="text-slate-900 block truncate">{item.empresaRazaoSocial}</strong>
-                        <span className="text-slate-600">{item.empresaDoc}</span>
+                        <span className="text-slate-600 font-mono">{formatCpfCnpj(item.empresaDoc)}</span>
                       </div>
 
                       <div>

@@ -16,7 +16,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { AgendamentoData, StatusAgendamento, StatusPagamento } from "@/types";
-import { formatCurrencyBRL, formatDateBR } from "@/lib/formatters";
+import { formatCurrencyBRL, formatDateBR, formatCpfCnpj, formatPhone } from "@/lib/formatters";
 import ToastContainer from "@/components/ui/Toast";
 
 export default function AdminAgendamentosPage() {
@@ -256,11 +256,11 @@ export default function AdminAgendamentosPage() {
                     </td>
                     <td className="py-3 px-4">
                       <span className="font-semibold text-slate-900 block truncate max-w-xs">{ag.trabalhadorNome}</span>
-                      <span className="text-[11px] text-slate-500">{ag.trabalhadorCpf} · {ag.trabalhadorFuncao}</span>
+                      <span className="text-[11px] text-slate-500 font-mono">{formatCpfCnpj(ag.trabalhadorCpf)} · {ag.trabalhadorFuncao}</span>
                     </td>
                     <td className="py-3 px-4">
                       <span className="truncate block max-w-xs text-slate-900 font-medium">{ag.empresaRazaoSocial}</span>
-                      <span className="text-[11px] text-slate-500">{ag.empresaDoc}</span>
+                      <span className="text-[11px] text-slate-500 font-mono">{formatCpfCnpj(ag.empresaDoc)}</span>
                     </td>
                     <td className="py-3 px-4 text-slate-600 truncate max-w-xs">
                       {ag.unidadeNome}

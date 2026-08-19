@@ -11,6 +11,8 @@ export type TipoExame =
   | "RETORNO AO TRABALHO"
   | "RETORNO (15 DIAS)";
 
+export type TipoExameOcupacional = TipoExame;
+
 export type FormaPagamento =
   | "PIX_DESCONTO"
   | "PADRAO"

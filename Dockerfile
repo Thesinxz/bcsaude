@@ -1,43 +1,38 @@
-FROM node:20-bookworm-slim AS base
-
-# Instala dependências de compilação para better-sqlite3 e ferramentas de sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    make \
-    g++ \
-    sqlite3 \
-    openssl \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
+FROM node:20-alpine AS base
+RUN apk add --no-cache openssl libc6-compat
 WORKDIR /app
 
-# Variáveis de ambiente padrão
+# 1. Instalação de dependências
+FROM base AS deps
+COPY package.json package-lock.json ./
+COPY prisma ./prisma/
+RUN npm ci
+
+# 2. Build da aplicação
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN npx prisma generate
+RUN npm run build
+
+# 3. Imagem de Execução Final (Ultraleve)
+FROM base AS runner
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Copia arquivos de dependência
-COPY package.json package-lock.json ./
-COPY prisma ./prisma/
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/start.sh ./start.sh
 
-# Instala dependências de produção e compila módulos nativos
-RUN npm ci --include=dev
+RUN chmod +x ./start.sh
 
-# Gera cliente Prisma
-RUN npx prisma generate
-
-# Copia código-fonte
-COPY . .
-
-# Build do Next.js
-RUN npm run build
-
-# Torna script de inicialização executável
-RUN chmod +x start.sh
-
-# Expõe a porta 3000
 EXPOSE 3000
 
-# Executa migrações e sobe o app
 CMD ["./start.sh"]

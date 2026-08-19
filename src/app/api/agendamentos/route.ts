@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Busca configurações de preço vigentes
-    const configs = await prisma.configuracao.findMany();
+    // Busca configurações de preço vigentes com fallback
+    const configs = await prisma.configuracao.findMany().catch(() => []);
     const configMap = configs.reduce((acc, curr) => {
       acc[curr.chave] = curr.valor;
       return acc;

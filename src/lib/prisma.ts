@@ -9,17 +9,18 @@ function createPrismaClient() {
     process.env.DATABASE_URL ||
     "postgresql://postgres:postgres@localhost:5432/bcsaude?schema=public";
 
-  const isLocal =
-    connectionString.includes("localhost") ||
-    connectionString.includes("127.0.0.1") ||
-    connectionString.includes("@postgres:5432");
+  // Só ativa SSL se a URL exigir explicitamente sslmode=require ou ssl=true
+  const requiresSsl =
+    connectionString.includes("sslmode=require") ||
+    connectionString.includes("ssl=true") ||
+    connectionString.includes("sslmode=verify-full");
 
   const pool = new pg.Pool({
     connectionString,
     max: 15,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
-    ssl: isLocal ? false : { rejectUnauthorized: false },
+    ssl: requiresSsl ? { rejectUnauthorized: false } : false,
   });
 
   const adapter = new PrismaPg(pool);

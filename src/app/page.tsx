@@ -56,7 +56,7 @@ export default function AgendamentoPage() {
     trabalhadorNome: "",
     trabalhadorFuncao: "",
     trabalhadorNasc: "",
-    tipoExame: "",
+    tipoExame: "ADMISSIONAL",
     examesComplementares: [],
     formaPagamento: "PIX_DESCONTO",
     lgpdAceite: true,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   UserCheck,
   Stethoscope,
@@ -99,6 +99,12 @@ export default function Step4Trabalhador({
     msg: "",
   });
   const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    if (!tipoExame) {
+      onChange({ tipoExame: "ADMISSIONAL" });
+    }
+  }, [tipoExame, onChange]);
 
   const buscarHistoricoTrabalhador = async (cleanCpf: string) => {
     if (cleanCpf.length !== 11 || !isValidCPF(cleanCpf)) return;

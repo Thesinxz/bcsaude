@@ -82,8 +82,16 @@ export default function ConsultarPage() {
                 type="text"
                 placeholder="Digite o Protocolo (ex: BC-2026-1001), CPF ou CNPJ..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-[#0F2C59] focus:outline-none transition"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const hasLetters = /[a-zA-Z]/.test(val);
+                  if (!hasLetters && val.replace(/\D/g, "").length > 0) {
+                    setQuery(formatCpfCnpj(val));
+                  } else {
+                    setQuery(val);
+                  }
+                }}
+                className="w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 py-3 text-sm font-mono sm:font-sans text-slate-900 placeholder-slate-400 focus:border-[#0F2C59] focus:outline-none transition"
               />
             </div>
 

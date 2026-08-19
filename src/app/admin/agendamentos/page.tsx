@@ -183,7 +183,15 @@ export default function AdminAgendamentosPage() {
               type="text"
               placeholder="Buscar por Protocolo, Nome do Trabalhador, CPF, CNPJ ou Razão Social..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                const hasLetters = /[a-zA-Z]/.test(val);
+                if (!hasLetters && val.replace(/\D/g, "").length > 0) {
+                  setQuery(formatCpfCnpj(val));
+                } else {
+                  setQuery(val);
+                }
+              }}
               className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-[#0F2C59] focus:outline-none transition"
             />
           </div>

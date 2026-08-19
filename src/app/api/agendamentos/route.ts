@@ -31,11 +31,13 @@ export async function GET(request: NextRequest) {
     if (query) {
       const cleanDigits = query.replace(/\D/g, "");
       where.OR = [
-        { protocolo: { contains: query } },
-        { trabalhadorNome: { contains: query } },
-        { empresaRazaoSocial: { contains: query } },
+        { protocolo: { contains: query, mode: "insensitive" } },
+        { trabalhadorNome: { contains: query, mode: "insensitive" } },
+        { empresaRazaoSocial: { contains: query, mode: "insensitive" } },
         { trabalhadorCpf: { contains: cleanDigits.length > 0 ? cleanDigits : query } },
+        { trabalhadorCpf: { contains: query } },
         { empresaDoc: { contains: cleanDigits.length > 0 ? cleanDigits : query } },
+        { empresaDoc: { contains: query } },
       ];
     }
 

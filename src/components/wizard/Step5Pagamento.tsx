@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { QrCode, CreditCard, Building, ShieldCheck, AlertTriangle, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { QrCode, CreditCard, Building, ShieldCheck, AlertTriangle, ArrowLeft, CheckCircle2, Loader2, Package, Landmark } from "lucide-react";
 import { FormaPagamento } from "@/types";
 import { formatCurrencyBRL } from "@/lib/formatters";
 
 interface Step5PagamentoProps {
+  perfil?: string;
   formaPagamento: FormaPagamento;
   valorBase: number;
   valorDescontoPix: number;
@@ -21,6 +22,7 @@ interface Step5PagamentoProps {
 }
 
 export default function Step5Pagamento({
+  perfil = "EMPRESAS (COM CNPJ) / OU EMPREGADORES (CPF/CAEPF / CEI)",
   formaPagamento,
   valorBase,
   valorDescontoPix,
@@ -32,6 +34,8 @@ export default function Step5Pagamento({
   onBack,
 }: Step5PagamentoProps) {
   const [errorMsg, setErrorMsg] = useState("");
+  const isServidor = perfil.includes("SERVIDOR") || perfil.includes("CONCURSO");
+  const isKit = perfil.includes("KIT");
 
   const handleSubmit = () => {
     setErrorMsg("");
@@ -47,14 +51,16 @@ export default function Step5Pagamento({
       <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-7 shadow-xs">
         <div className="flex items-center gap-3 mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 text-sky-800 border border-sky-200">
-            <QrCode className="h-5 w-5" />
+            {isKit ? <Package className="h-5 w-5" /> : isServidor ? <Landmark className="h-5 w-5" /> : <QrCode className="h-5 w-5" />}
           </div>
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-              Forma de Pagamento & Termos Legais
+              {isKit ? "Confirmação do Kit & Termos Legais" : "Forma de Pagamento & Termos Legais"}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 font-normal">
-              Escolha a condição de pagamento e confirme o aceite das normas regulamentadoras
+              {isKit
+                ? "Confirme os dados para registro do agendamento faturado em contrato"
+                : "Escolha a condição de pagamento e confirme o aceite das normas regulamentadoras"}
             </p>
           </div>
         </div>
@@ -73,73 +79,131 @@ export default function Step5Pagamento({
               Condição de Pagamento *
             </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* PIX com Desconto */}
-              <div
-                onClick={() => onChange({ formaPagamento: "PIX_DESCONTO" })}
-                className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
-                  formaPagamento === "PIX_DESCONTO"
-                    ? "bg-slate-50 border-[#0F2C59] ring-2 ring-[#0F2C59]/10 shadow-xs"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-[#0F2C59] font-bold text-xs sm:text-sm">
-                    <QrCode className="h-4 w-4" />
-                    <span>PIX com Desconto</span>
-                  </div>
-                  <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
-                    -{formatCurrencyBRL(valorDescontoPix)}
-                  </span>
+            {isKit ? (
+              <div className="rounded-xl border border-sky-300 bg-sky-50/50 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-sky-900 font-bold text-sm">
+                  <Package className="h-4 w-4 text-sky-700" />
+                  <span>Atendimento Coordenado — Faturado em Contrato PJ (R$ 0,00)</span>
                 </div>
-                <p className="text-xs text-slate-600 font-normal">
-                  Pagamento antecipado em até {horasLimitePix}h para garantir a vaga e o desconto especial.
+                <p className="text-xs text-sky-800 font-normal leading-relaxed">
+                  Este agendamento é registrado como coordenadas e seguirá faturado diretamente para a empresa vinculada ao contrato. Nenhum valor de cobrança imediata é gerado nesta etapa.
                 </p>
               </div>
+            ) : isServidor ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* PIX Tarifa Concurso */}
+                <div
+                  onClick={() => onChange({ formaPagamento: "PIX_DESCONTO" })}
+                  className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
+                    formaPagamento === "PIX_DESCONTO"
+                      ? "bg-slate-50 border-[#0F2C59] ring-2 ring-[#0F2C59]/10 shadow-xs"
+                      : "bg-white border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-[#0F2C59] font-bold text-xs sm:text-sm">
+                      <QrCode className="h-4 w-4" />
+                      <span>PIX Especial Concurso</span>
+                    </div>
+                    <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                      R$ 70,00
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 font-normal">
+                    Pagamento antecipado via PIX para garantir a vaga e a emissão ágil do laudo de aptidão.
+                  </p>
+                </div>
 
-              {/* Padrão */}
-              <div
-                onClick={() => onChange({ formaPagamento: "PADRAO" })}
-                className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
-                  formaPagamento === "PADRAO"
-                    ? "bg-slate-50 border-[#0F2C59] ring-2 ring-[#0F2C59]/10 shadow-xs"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm">
-                    <CreditCard className="h-4 w-4 text-slate-700" />
-                    <span>Padrão / Balcão</span>
+                {/* Balcão */}
+                <div
+                  onClick={() => onChange({ formaPagamento: "PADRAO" })}
+                  className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
+                    formaPagamento === "PADRAO"
+                      ? "bg-slate-50 border-[#0F2C59] ring-2 ring-[#0F2C59]/10 shadow-xs"
+                      : "bg-white border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm">
+                      <CreditCard className="h-4 w-4 text-slate-700" />
+                      <span>Pagamento no Balcão</span>
+                    </div>
                   </div>
+                  <p className="text-xs text-slate-600 font-normal">
+                    Pagamento na recepção da clínica no dia do exame via Débito, Crédito ou Dinheiro.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-600 font-normal">
-                  Pagamento no balcão da clínica no dia do atendimento via Cartão de Débito, Crédito ou Dinheiro.
-                </p>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* PIX com Desconto */}
+                <div
+                  onClick={() => onChange({ formaPagamento: "PIX_DESCONTO" })}
+                  className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
+                    formaPagamento === "PIX_DESCONTO"
+                      ? "bg-slate-50 border-[#0F2C59] ring-2 ring-[#0F2C59]/10 shadow-xs"
+                      : "bg-white border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-[#0F2C59] font-bold text-xs sm:text-sm">
+                      <QrCode className="h-4 w-4" />
+                      <span>PIX com Desconto</span>
+                    </div>
+                    <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                      -{formatCurrencyBRL(valorDescontoPix)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 font-normal">
+                    Pagamento antecipado em até {horasLimitePix}h para garantir a vaga e o desconto especial (R$ 83,00).
+                  </p>
+                </div>
 
-              {/* Faturado PJ */}
-              <div
-                onClick={() => onChange({ formaPagamento: "FATURADO" })}
-                className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
-                  formaPagamento === "FATURADO"
-                    ? "bg-slate-50 border-[#0F2C59] ring-2 ring-[#0F2C59]/10 shadow-xs"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm">
-                    <Building className="h-4 w-4 text-slate-700" />
-                    <span>Faturado PJ</span>
+                {/* Padrão */}
+                <div
+                  onClick={() => onChange({ formaPagamento: "PADRAO" })}
+                  className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
+                    formaPagamento === "PADRAO"
+                      ? "bg-slate-50 border-[#0F2C59] ring-2 ring-[#0F2C59]/10 shadow-xs"
+                      : "bg-white border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm">
+                      <CreditCard className="h-4 w-4 text-slate-700" />
+                      <span>Padrão / Balcão</span>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-700">R$ 90,00</span>
                   </div>
-                  <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
-                    Convênio
-                  </span>
+                  <p className="text-xs text-slate-600 font-normal">
+                    Pagamento no balcão da clínica no dia do atendimento via Cartão de Débito, Crédito ou Dinheiro.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-600 font-normal">
-                  Para empresas com contrato mensal e faturamento via boleto corporativo pós-atendimento.
-                </p>
+
+                {/* Faturado PJ */}
+                <div
+                  onClick={() => onChange({ formaPagamento: "FATURADO" })}
+                  className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
+                    formaPagamento === "FATURADO"
+                      ? "bg-slate-50 border-[#0F2C59] ring-2 ring-[#0F2C59]/10 shadow-xs"
+                      : "bg-white border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm">
+                      <Building className="h-4 w-4 text-slate-700" />
+                      <span>Faturado PJ</span>
+                    </div>
+                    <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+                      Convênio
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 font-normal">
+                    Para empresas com contrato mensal e faturamento via boleto corporativo pós-atendimento.
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="h-px bg-slate-200" />

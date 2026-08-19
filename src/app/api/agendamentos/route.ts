@@ -105,14 +105,29 @@ export async function POST(request: NextRequest) {
     const valorBasePadrao = parseFloat(configMap["VALOR_BASE_PADRAO"] || "90.00");
     const descontoPixReais = parseFloat(configMap["DESCONTO_PIX_REAIS"] || "7.00");
 
-    // Calcula valor dos adicionais
-    const adicionais = body.examesComplementares || [];
-    const valorAdicionais = adicionais.reduce((acc, item) => acc + (item.preco || 0), 0);
+    // Calcula valores baseado no perfil do contratante
+    const perfil = body.perfilContratante || "EMPRESAS (COM CNPJ) / OU EMPREGADORES (CPF/CAEPF / CEI)";
+    const isServidor = perfil.includes("SERVIDOR") || perfil.includes("CONCURSO");
+    const isKit = perfil.includes("KIT");
 
-    const isPix = body.formaPagamento === "PIX_DESCONTO";
-    const valorDesconto = isPix ? descontoPixReais : 0;
-    const valorBase = valorBasePadrao;
-    const valorTotal = valorBase + valorAdicionais - valorDesconto;
+    const adicionais = body.examesComplementares || [];
+    const valorAdicionais = isKit ? 0 : adicionais.reduce((acc, item) => acc + (item.preco || 0), 0);
+
+    let valorBase = valorBasePadrao;
+    let valorDesconto = 0;
+
+    if (isKit) {
+      valorBase = 0;
+      valorDesconto = 0;
+    } else if (isServidor) {
+      valorBase = 70.0;
+      valorDesconto = 0;
+    } else {
+      const isPix = body.formaPagamento === "PIX_DESCONTO" || !body.formaPagamento;
+      valorDesconto = isPix ? descontoPixReais : 0;
+    }
+
+    const valorTotal = Math.max(0, valorBase + valorAdicionais - valorDesconto);
 
     // Gera protocolo único BC-ANO-NUM
     const ano = new Date().getFullYear();
@@ -170,7 +185,7 @@ export async function POST(request: NextRequest) {
         valorAdicionais,
         valorDesconto,
         valorTotal,
-        statusPagamento: isPix ? "PENDENTE" : "FATURADO",
+        statusPagamento: isKit ? "FATURADO" : (body.formaPagamento === "FATURADO" ? "FATURADO" : "PENDENTE"),
         statusAgendamento: "AGENDADO",
         observacoes: body.observacoes || "",
         lgpdAceite: body.lgpdAceite ?? true,

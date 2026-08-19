@@ -163,6 +163,7 @@ export default function AgendamentoPage() {
 
             {currentStep === 3 && (
               <Step3Empresa
+                perfil={formData.perfilContratante}
                 empresaDoc={formData.empresaDoc || ""}
                 empresaRazaoSocial={formData.empresaRazaoSocial || ""}
                 empresaEmailAso={formData.empresaEmailAso || ""}
@@ -190,6 +191,7 @@ export default function AgendamentoPage() {
 
             {currentStep === 5 && (
               <Step5Pagamento
+                perfil={formData.perfilContratante}
                 formaPagamento={(formData.formaPagamento as FormaPagamento) || "PIX_DESCONTO"}
                 valorBase={valorBasePadrao}
                 valorDescontoPix={descontoPixReais}

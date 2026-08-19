@@ -1,10 +1,13 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import Database from "better-sqlite3";
-import path from "path";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-const dbPath = path.resolve(process.cwd(), "prisma/dev.db");
-const adapter = new PrismaBetterSqlite3({ url: dbPath });
+const connectionString =
+  process.env.DATABASE_URL ||
+  "postgresql://postgres:postgres@localhost:5432/bcsaude?schema=public";
+
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const defaultExames = [
@@ -74,7 +77,7 @@ const defaultUnidades = [
     uf: "MS",
     telefone: "(67) 98113-1076",
     horariosDisponiveis: JSON.stringify([
-      "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+      "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00",
       "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
     ]),
     ativo: true
@@ -86,8 +89,8 @@ const defaultUnidades = [
     uf: "MS",
     telefone: "(67) 98113-1076",
     horariosDisponiveis: JSON.stringify([
-      "08:00", "08:45", "09:30", "10:15", "11:00",
-      "13:30", "14:15", "15:00", "15:45", "16:30"
+      "08:00", "08:40", "09:20", "10:00", "10:40",
+      "13:30", "14:10", "14:50", "15:30", "16:10"
     ]),
     ativo: true
   },
@@ -110,8 +113,8 @@ const defaultUnidades = [
     uf: "MS",
     telefone: "(67) 98113-1076",
     horariosDisponiveis: JSON.stringify([
-      "07:30", "08:00", "08:30", "09:00", "09:30", "10:00",
-      "13:30", "14:00", "14:30", "15:00", "15:30", "16:00"
+      "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00",
+      "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"
     ]),
     ativo: true
   }
@@ -127,7 +130,7 @@ const defaultConfigs = [
 ];
 
 async function main() {
-  console.log("Iniciando Seed do Banco de Dados...");
+  console.log("Iniciando Seed do Banco PostgreSQL...");
 
   // Configurações
   for (const cfg of defaultConfigs) {
@@ -164,73 +167,15 @@ async function main() {
   }
   console.log(`✓ ${defaultUnidades.length} unidades cadastradas`);
 
-  // Exemplo de Empresa inicial
-  await prisma.empresa.upsert({
-    where: { cnpj: "61874839000143" },
-    update: {},
-    create: {
-      cnpj: "61874839000143",
-      razaoSocial: "EMPRESA EXEMPLO LOGISTICA E TRANSPORTES LTDA",
-      nomeFantasia: "EXEMPLO LOG",
-      emailAso: "aso@exemplolog.com.br",
-      telefone: "(67) 98113-1076",
-      logradouro: "Av. das Indústrias",
-      numero: "1500",
-      bairro: "Distrito Industrial",
-      municipio: "Campo Grande",
-      uf: "MS",
-      cep: "79000-000",
-      tipoConvenio: "AVULSO"
-    }
-  });
-
-  // Exemplo de Agendamento inicial para demonstração e testes de busca
-  await prisma.agendamento.upsert({
-    where: { protocolo: "BC-2026-1001" },
-    update: {},
-    create: {
-      protocolo: "BC-2026-1001",
-      perfilContratante: "EMPRESAS (COM CNPJ) / OU EMPREGADORES (CPF/CAEPF / CEI)",
-      unidadeId: "matriz",
-      unidadeNome: "Unidade Matriz - Centro Médico",
-      unidadeEndereco: "Av. Afonso Pena, 3200 - Centro, Campo Grande - MS",
-      dataAgendada: "2026-08-25",
-      horaAgendada: "08:30",
-      responsavelNome: "Carlos Eduardo Silva",
-      responsavelEmail: "carlos.rh@exemplolog.com.br",
-      responsavelTelefone: "(67) 98113-1076",
-      empresaDoc: "61.874.839/0001-43",
-      empresaRazaoSocial: "EMPRESA EXEMPLO LOGISTICA E TRANSPORTES LTDA",
-      empresaEmailAso: "aso@exemplolog.com.br",
-      trabalhadorCpf: "123.456.789-00",
-      trabalhadorNome: "Marcos Vinicius de Souza",
-      trabalhadorFuncao: "Motorista de Carga Pesada",
-      trabalhadorNasc: "1988-05-14",
-      tipoExame: "ADMISSIONAL",
-      examesComplementares: JSON.stringify([
-        { nome: "ACUIDADE VISUAL", preco: 35, instrucao: "Trazer óculos corretivos, caso utilize." },
-        { nome: "AUDIOMETRIA", preco: 55, instrucao: "Realizar repouso acústico de 8 horas antes do exame." },
-        { nome: "ELETROCARDIOGRAMA (ECG)", preco: 77, instrucao: "Não fumar ou ingerir café 2h antes." }
-      ]),
-      formaPagamento: "PIX_DESCONTO",
-      valorBase: 90.0,
-      valorAdicionais: 167.0,
-      valorDesconto: 7.0,
-      valorTotal: 250.0,
-      statusPagamento: "PAGO",
-      statusAgendamento: "CONFIRMADO",
-      lgpdAceite: true
-    }
-  });
-
-  console.log("✓ Seed finalizado com sucesso!");
+  console.log("✓ Seed PostgreSQL finalizado com sucesso!");
 }
 
 main()
   .catch((e) => {
-    console.error("Erro no Seed:", e);
+    console.error("Erro no Seed PostgreSQL:", e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

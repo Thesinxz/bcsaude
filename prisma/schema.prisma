@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 generator client {
@@ -45,6 +45,12 @@ model Agendamento {
   
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  @@index([protocolo])
+  @@index([trabalhadorCpf])
+  @@index([empresaDoc])
+  @@index([dataAgendada])
+  @@index([unidadeId])
 }
 
 model Empresa {
@@ -64,6 +70,8 @@ model Empresa {
   tipoConvenio      String   @default("AVULSO") // AVULSO, CONTRATO, KIT_PROPRIO
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  @@index([cnpj])
 }
 
 model Trabalhador {
@@ -75,6 +83,8 @@ model Trabalhador {
   empresaCnpj     String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([cpf])
 }
 
 model Exame {
@@ -87,6 +97,8 @@ model Exame {
   ativo             Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  @@index([codigo])
 }
 
 model Unidade {

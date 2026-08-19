@@ -12,11 +12,30 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DATABASE_URL=file:/app/prisma/dev.db
+      - DATABASE_URL=postgresql://bcsaude_user:bcsaude_secure_pass@postgres:5432/bcsaude?schema=public
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://bcsaude.com.br}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: bcsaude-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: bcsaude_user
+      POSTGRES_PASSWORD: bcsaude_secure_pass
+      POSTGRES_DB: bcsaude
     volumes:
-      - bcsaude_data:/app/prisma
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bcsaude_user -d bcsaude"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  bcsaude_data:
+  postgres_data:
     driver: local

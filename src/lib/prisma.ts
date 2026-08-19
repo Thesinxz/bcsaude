@@ -9,11 +9,17 @@ function createPrismaClient() {
     process.env.DATABASE_URL ||
     "postgresql://postgres:postgres@localhost:5432/bcsaude?schema=public";
 
+  const isLocal =
+    connectionString.includes("localhost") ||
+    connectionString.includes("127.0.0.1") ||
+    connectionString.includes("@postgres:5432");
+
   const pool = new pg.Pool({
     connectionString,
-    max: 20,
+    max: 15,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 10000,
+    ssl: isLocal ? false : { rejectUnauthorized: false },
   });
 
   const adapter = new PrismaPg(pool);

@@ -1,20 +1,21 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { INITIAL_UNIDADES, INITIAL_EXAMES } from "@/lib/initialData";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     const [configs, exames, unidades] = await Promise.all([
-      prisma.configuracao.findMany(),
+      prisma.configuracao.findMany().catch(() => []),
       prisma.exame.findMany({
         where: { ativo: true },
         orderBy: { nome: "asc" },
-      }),
+      }).catch(() => []),
       prisma.unidade.findMany({
         where: { ativo: true },
         orderBy: { nome: "asc" },
-      }),
+      }).catch(() => []),
     ]);
 
     const configMap = configs.reduce((acc, curr) => {
@@ -22,9 +23,11 @@ export async function GET() {
       return acc;
     }, {} as Record<string, string>);
 
-    const formattedUnidades = unidades.map((u) => ({
+    const formattedUnidades = (unidades.length > 0 ? unidades : INITIAL_UNIDADES).map((u) => ({
       ...u,
-      horariosDisponiveis: JSON.parse(u.horariosDisponiveis || "[]"),
+      horariosDisponiveis: typeof u.horariosDisponiveis === "string" 
+        ? JSON.parse(u.horariosDisponiveis || "[]") 
+        : (u.horariosDisponiveis || []),
     }));
 
     return NextResponse.json({
@@ -36,14 +39,22 @@ export async function GET() {
         avisoNoShow: configMap["AVISO_NO_SHOW"] || "",
         whatsappSuporte: configMap["WHATSAPP_SUPORTE"] || "(67) 98113-1076",
       },
-      exames,
+      exames: exames.length > 0 ? exames : INITIAL_EXAMES,
       unidades: formattedUnidades,
     });
   } catch (error) {
-    console.error("Erro ao buscar configurações:", error);
-    return NextResponse.json(
-      { error: "Erro ao carregar configurações." },
-      { status: 500 }
-    );
+    console.warn("Aviso ao buscar configurações no banco (usando fallback inicial):", error);
+    return NextResponse.json({
+      config: {
+        valorBasePadrao: 90.0,
+        valorBasePix: 83.0,
+        descontoPixReais: 7.0,
+        horasLimitePix: 2,
+        avisoNoShow: "",
+        whatsappSuporte: "(67) 98113-1076",
+      },
+      exames: INITIAL_EXAMES,
+      unidades: INITIAL_UNIDADES,
+    });
   }
 }
